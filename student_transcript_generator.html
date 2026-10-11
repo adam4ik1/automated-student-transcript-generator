@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Transcript Generator</title>
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-dark: #1e3a8a;
+      --secondary: #eff6ff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --success: #166534;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: white;
+      padding: 28px;
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(29, 78, 216, 0.18);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #dbeafe;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr auto auto;
+      gap: 12px;
+      background: var(--white);
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.98rem;
+      background: white;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 0.98rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 24px;
+    }
+
+    .panel,
+    .transcript {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .panel {
+      padding: 18px;
+      height: fit-content;
+    }
+
+    .panel h2,
+    .transcript h2,
+    .transcript h3 {
+      margin-top: 0;
+    }
+
+    .student-list {
+      max-height: 900px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .student-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      background: #fff;
+    }
+
+    .student-card:hover,
+    .student-card.active {
+      border-color: var(--primary);
+      background: var(--secondary);
+      transform: translateY(-1px);
+    }
+
+    .student-card .name {
+      font-weight: 700;
+    }
+
+    .student-card .meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .transcript {
+      padding: 28px;
+    }
+
+    .transcript-header {
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .transcript-header .title h2 {
+      margin-bottom: 6px;
+      color: var(--primary-dark);
+    }
+
+    .badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: var(--success);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px 20px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+
+    .info-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 4px;
+    }
+
+    .semester {
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .semester-header {
+      background: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: #eff6ff;
+      color: var(--primary-dark);
+    }
+
+    td.num, th.num {
+      text-align: center;
+    }
+
+    .summary {
+      margin-top: 24px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .summary-card {
+      background: white;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+    }
+
+    .summary-card strong {
+      font-size: 1.3rem;
+      color: var(--primary-dark);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--muted);
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      background: #f8fafc;
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    @media print {
+      body { background: white; }
+      .hero, .controls, .panel { display: none !important; }
+      .layout { display: block; }
+      .transcript { box-shadow: none; border: none; padding: 0; }
+      .app { max-width: 100%; padding: 0; }
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <h1>Student Transcript Generator</h1>
+      <p>Dynamic transcript generation from a fictional student database. Select any student to instantly build a professional academic transcript.</p>
+    </section>
+
+    <section class="controls">
+      <div class="field">
+        <label for="searchInput">Search by student name, ID, or email</label>
+        <input id="searchInput" type="text" placeholder="e.g. Lina, S1001, university email" />
+      </div>
+      <div class="field">
+        <label for="studentSelect">Or select a student</label>
+        <select id="studentSelect">
+          <option value="">-- Select a student --</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="printBtn">Print / Save PDF</button>
+      <button class="btn-secondary" id="resetBtn">Reset</button>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>Students</h2>
+        <div id="studentList" class="student-list"></div>
+      </aside>
+
+      <main>
+        <div id="transcriptOutput" class="transcript">
+          <div class="empty">
+            <h2>No transcript selected</h2>
+            <p>Select a student from the list, use the dropdown, or search to generate the transcript automatically.</p>
+          </div>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <script>
+    const students = [
+      { id: 'S1001', name: 'Lina Ahmed', email: 'lina.ahmed@university.edu', faculty: 'Business', program: 'BBA Management', enrollmentDate: '2022-09-01', status: 'Active' },
+      { id: 'S1002', name: 'Omar Hassan', email: 'omar.hassan@university.edu', faculty: 'Engineering', program: 'BSc Computer Engineering', enrollmentDate: '2021-09-01', status: 'Active' },
+      { id: 'S1003', name: 'Sofia Petrova', email: 'sofia.petrova@university.edu', faculty: 'Arts & Humanities', program: 'BA English Literature', enrollmentDate: '2023-01-15', status: 'Active' },
+      { id: 'S1004', name: 'Daniel Kim', email: 'daniel.kim@university.edu', faculty: 'Science', program: 'BSc Biology', enrollmentDate: '2022-09-01', status: 'Active' },
+      { id: 'S1005', name: 'Maya Johnson', email: 'maya.johnson@university.edu', faculty: 'Business', program: 'BSc Accounting', enrollmentDate: '2021-09-01', status: 'Graduated' },
+      { id: 'S1006', name: 'Adam Novak', email: 'adam.novak@university.edu', faculty: 'Engineering', program: 'BSc Software Engineering', enrollmentDate: '2023-09-01', status: 'Active' },
+      { id: 'S1007', name: 'Fatima Ali', email: 'fatima.ali@university.edu', faculty: 'Health Sciences', program: 'BSc Nursing', enrollmentDate: '2022-09-01', status: 'Active' },
+      { id: 'S1008', name: 'Lucas Brown', email: 'lucas.brown@university.edu', faculty: 'Science', program: 'BSc Mathematics', enrollmentDate: '2021-09-01', status: 'Active' },
+      { id: 'S1009', name: 'Emma Wilson', email: 'emma.wilson@university.edu', faculty: 'Social Sciences', program: 'BA Psychology', enrollmentDate: '2023-09-01', status: 'Active' },
+      { id: 'S1010', name: 'Noah Martin', email: 'noah.martin@university.edu', faculty: 'Business', program: 'BSc Finance', enrollmentDate: '2022-01-15', status: 'Active' },
+      { id: 'S1011', name: 'Hana Suzuki', email: 'hana.suzuki@university.edu', faculty: 'Engineering', program: 'BSc Electrical Engineering', enrollmentDate: '2021-09-01', status: 'Active' },
+      { id: 'S1012', name: 'Karim Mansour', email: 'karim.mansour@university.edu', faculty: 'Law', program: 'LLB Law', enrollmentDate: '2022-09-01', status: 'Active' },
+      { id: 'S1013', name: 'Elena Rossi', email: 'elena.rossi@university.edu', faculty: 'Arts & Humanities', program: 'BA History', enrollmentDate: '2023-01-15', status: 'Active' },
+      { id: 'S1014', name: 'Victor Chen', email: 'victor.chen@university.edu', faculty: 'Science', program: 'BSc Chemistry', enrollmentDate: '2022-09-01', status: 'Active' },
+      { id: 'S1015', name: 'Aisha Khan', email: 'aisha.khan@university.edu', faculty: 'Health Sciences', program: 'BSc Public Health', enrollmentDate: '2021-09-01', status: 'Graduated' },
+      { id: 'S1016', name: 'Mark Evans', email: 'mark.evans@university.edu', faculty: 'Engineering', program: 'BSc Civil Engineering', enrollmentDate: '2023-09-01', status: 'Active' },
+      { id: 'S1017', name: 'Sara Muller', email: 'sara.muller@university.edu', faculty: 'Business', program: 'BA Marketing', enrollmentDate: '2022-09-01', status: 'Active' },
+      { id: 'S1018', name: 'Diego Garcia', email: 'diego.garcia@university.edu', faculty: 'Social Sciences', program: 'BA Political Science', enrollmentDate: '2021-09-01', status: 'Suspended' },
+      { id: 'S1019', name: 'Chloe Smith', email: 'chloe.smith@university.edu', faculty: 'Science', program: 'BSc Environmental Science', enrollmentDate: '2023-09-01', status: 'Active' },
+      { id: 'S1020', name: 'Ivan Petrov', email: 'ivan.petrov@university.edu', faculty: 'Engineering', program: 'BSc Mechanical Engineering', enrollmentDate: '2022-01-15', status: 'Active' }
+    ];
+
+    const academicRecords = [
+      { studentId: 'S1001', semester: 'Fall 2022', code: 'BUS101', title: 'Principles of Management', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1001', semester: 'Fall 2022', code: 'ENG110', title: 'Academic Writing', score: 91, grade: 'A-', credits: 5 },
+      { studentId: 'S1001', semester: 'Fall 2022', code: 'MAT101', title: 'Calculus I', score: 84, grade: 'B', credits: 6 },
+      { studentId: 'S1001', semester: 'Spring 2023', code: 'BUS102', title: 'Business Communication', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1001', semester: 'Spring 2023', code: 'MKT220', title: 'Marketing Principles', score: 86, grade: 'B', credits: 5 },
+      { studentId: 'S1001', semester: 'Spring 2023', code: 'ACC201', title: 'Financial Accounting', score: 79, grade: 'C+', credits: 6 },
+
+      { studentId: 'S1002', semester: 'Fall 2021', code: 'CSC101', title: 'Introduction to Programming', score: 94, grade: 'A', credits: 6 },
+      { studentId: 'S1002', semester: 'Fall 2021', code: 'MAT101', title: 'Calculus I', score: 89, grade: 'B+', credits: 6 },
+      { studentId: 'S1002', semester: 'Fall 2021', code: 'PHY101', title: 'General Physics', score: 82, grade: 'B-', credits: 6 },
+      { studentId: 'S1002', semester: 'Spring 2022', code: 'CSC202', title: 'Data Structures', score: 87, grade: 'B+', credits: 6 },
+      { studentId: 'S1002', semester: 'Spring 2022', code: 'MAT202', title: 'Linear Algebra', score: 91, grade: 'A-', credits: 6 },
+      { studentId: 'S1002', semester: 'Spring 2022', code: 'CSC305', title: 'Database Systems', score: 85, grade: 'B', credits: 6 },
+
+      { studentId: 'S1003', semester: 'Spring 2023', code: 'ENG110', title: 'Academic Writing', score: 92, grade: 'A-', credits: 5 },
+      { studentId: 'S1003', semester: 'Spring 2023', code: 'LIT101', title: 'Introduction to Literature', score: 88, grade: 'B+', credits: 5 },
+      { studentId: 'S1003', semester: 'Spring 2023', code: 'HIS101', title: 'World History', score: 81, grade: 'B-', credits: 5 },
+      { studentId: 'S1003', semester: 'Fall 2023', code: 'LIT205', title: 'Poetry and Drama', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1003', semester: 'Fall 2023', code: 'PHI110', title: 'Critical Thinking', score: 84, grade: 'B', credits: 5 },
+      { studentId: 'S1003', semester: 'Fall 2023', code: 'COM120', title: 'Public Speaking', score: 87, grade: 'B+', credits: 5 },
+
+      { studentId: 'S1004', semester: 'Fall 2022', code: 'BIO101', title: 'Cell Biology', score: 86, grade: 'B', credits: 6 },
+      { studentId: 'S1004', semester: 'Fall 2022', code: 'CHE101', title: 'General Chemistry', score: 80, grade: 'B-', credits: 6 },
+      { studentId: 'S1004', semester: 'Fall 2022', code: 'MAT101', title: 'Calculus I', score: 76, grade: 'C', credits: 6 },
+      { studentId: 'S1004', semester: 'Spring 2023', code: 'BIO205', title: 'Genetics', score: 89, grade: 'B+', credits: 6 },
+      { studentId: 'S1004', semester: 'Spring 2023', code: 'BIO220', title: 'Ecology', score: 91, grade: 'A-', credits: 6 },
+      { studentId: 'S1004', semester: 'Spring 2023', code: 'STA201', title: 'Statistics for Science', score: 83, grade: 'B', credits: 5 },
+
+      { studentId: 'S1005', semester: 'Fall 2021', code: 'ACC201', title: 'Financial Accounting', score: 93, grade: 'A', credits: 6 },
+      { studentId: 'S1005', semester: 'Fall 2021', code: 'BUS101', title: 'Principles of Management', score: 90, grade: 'A-', credits: 6 },
+      { studentId: 'S1005', semester: 'Fall 2021', code: 'ECO101', title: 'Microeconomics', score: 86, grade: 'B', credits: 5 },
+      { studentId: 'S1005', semester: 'Spring 2022', code: 'ACC302', title: 'Managerial Accounting', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1005', semester: 'Spring 2022', code: 'FIN210', title: 'Corporate Finance', score: 91, grade: 'A-', credits: 6 },
+      { studentId: 'S1005', semester: 'Spring 2022', code: 'BUS220', title: 'Business Law', score: 84, grade: 'B', credits: 5 },
+
+      { studentId: 'S1006', semester: 'Fall 2023', code: 'CSC101', title: 'Introduction to Programming', score: 90, grade: 'A-', credits: 6 },
+      { studentId: 'S1006', semester: 'Fall 2023', code: 'MAT101', title: 'Calculus I', score: 83, grade: 'B', credits: 6 },
+      { studentId: 'S1006', semester: 'Fall 2023', code: 'ENG110', title: 'Academic Writing', score: 78, grade: 'C+', credits: 5 },
+      { studentId: 'S1006', semester: 'Spring 2024', code: 'CSC202', title: 'Data Structures', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1006', semester: 'Spring 2024', code: 'WEB210', title: 'Web Development', score: 92, grade: 'A-', credits: 5 },
+      { studentId: 'S1006', semester: 'Spring 2024', code: 'MAT202', title: 'Linear Algebra', score: 80, grade: 'B-', credits: 6 },
+
+      { studentId: 'S1007', semester: 'Fall 2022', code: 'NUR101', title: 'Foundations of Nursing', score: 95, grade: 'A', credits: 6 },
+      { studentId: 'S1007', semester: 'Fall 2022', code: 'BIO101', title: 'Cell Biology', score: 87, grade: 'B+', credits: 6 },
+      { studentId: 'S1007', semester: 'Fall 2022', code: 'PSY101', title: 'Introduction to Psychology', score: 89, grade: 'B+', credits: 5 },
+      { studentId: 'S1007', semester: 'Spring 2023', code: 'NUR205', title: 'Clinical Practice I', score: 92, grade: 'A-', credits: 6 },
+      { studentId: 'S1007', semester: 'Spring 2023', code: 'ANAT201', title: 'Human Anatomy', score: 85, grade: 'B', credits: 6 },
+      { studentId: 'S1007', semester: 'Spring 2023', code: 'HLT110', title: 'Health Ethics', score: 90, grade: 'A-', credits: 5 },
+
+      { studentId: 'S1008', semester: 'Fall 2021', code: 'MAT101', title: 'Calculus I', score: 96, grade: 'A', credits: 6 },
+      { studentId: 'S1008', semester: 'Fall 2021', code: 'PHY101', title: 'General Physics', score: 90, grade: 'A-', credits: 6 },
+      { studentId: 'S1008', semester: 'Fall 2021', code: 'CSC101', title: 'Introduction to Programming', score: 84, grade: 'B', credits: 6 },
+      { studentId: 'S1008', semester: 'Spring 2022', code: 'MAT202', title: 'Linear Algebra', score: 93, grade: 'A', credits: 6 },
+      { studentId: 'S1008', semester: 'Spring 2022', code: 'STA201', title: 'Statistics for Science', score: 89, grade: 'B+', credits: 5 },
+      { studentId: 'S1008', semester: 'Spring 2022', code: 'MAT240', title: 'Discrete Mathematics', score: 87, grade: 'B+', credits: 6 },
+
+      { studentId: 'S1009', semester: 'Fall 2023', code: 'PSY101', title: 'Introduction to Psychology', score: 91, grade: 'A-', credits: 5 },
+      { studentId: 'S1009', semester: 'Fall 2023', code: 'SOC101', title: 'Introduction to Sociology', score: 85, grade: 'B', credits: 5 },
+      { studentId: 'S1009', semester: 'Fall 2023', code: 'ENG110', title: 'Academic Writing', score: 88, grade: 'B+', credits: 5 },
+      { studentId: 'S1009', semester: 'Spring 2024', code: 'PSY210', title: 'Developmental Psychology', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1009', semester: 'Spring 2024', code: 'STA201', title: 'Statistics for Science', score: 82, grade: 'B-', credits: 5 },
+      { studentId: 'S1009', semester: 'Spring 2024', code: 'PSY230', title: 'Cognitive Psychology', score: 87, grade: 'B+', credits: 5 },
+
+      { studentId: 'S1010', semester: 'Spring 2022', code: 'FIN210', title: 'Corporate Finance', score: 89, grade: 'B+', credits: 6 },
+      { studentId: 'S1010', semester: 'Spring 2022', code: 'ACC201', title: 'Financial Accounting', score: 84, grade: 'B', credits: 6 },
+      { studentId: 'S1010', semester: 'Spring 2022', code: 'ECO101', title: 'Microeconomics', score: 79, grade: 'C+', credits: 5 },
+      { studentId: 'S1010', semester: 'Fall 2022', code: 'FIN310', title: 'Investment Analysis', score: 92, grade: 'A-', credits: 6 },
+      { studentId: 'S1010', semester: 'Fall 2022', code: 'BUS102', title: 'Business Communication', score: 86, grade: 'B', credits: 5 },
+      { studentId: 'S1010', semester: 'Fall 2022', code: 'STA201', title: 'Statistics for Science', score: 81, grade: 'B-', credits: 5 },
+
+      { studentId: 'S1011', semester: 'Fall 2021', code: 'EEE101', title: 'Electrical Circuits', score: 90, grade: 'A-', credits: 6 },
+      { studentId: 'S1011', semester: 'Fall 2021', code: 'MAT101', title: 'Calculus I', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1011', semester: 'Fall 2021', code: 'PHY101', title: 'General Physics', score: 86, grade: 'B', credits: 6 },
+      { studentId: 'S1011', semester: 'Spring 2022', code: 'EEE205', title: 'Digital Systems', score: 93, grade: 'A', credits: 6 },
+      { studentId: 'S1011', semester: 'Spring 2022', code: 'MAT202', title: 'Linear Algebra', score: 84, grade: 'B', credits: 6 },
+      { studentId: 'S1011', semester: 'Spring 2022', code: 'CSC101', title: 'Introduction to Programming', score: 87, grade: 'B+', credits: 6 },
+
+      { studentId: 'S1012', semester: 'Fall 2022', code: 'LAW101', title: 'Legal Systems', score: 92, grade: 'A-', credits: 6 },
+      { studentId: 'S1012', semester: 'Fall 2022', code: 'POL101', title: 'Introduction to Politics', score: 84, grade: 'B', credits: 5 },
+      { studentId: 'S1012', semester: 'Fall 2022', code: 'ENG110', title: 'Academic Writing', score: 81, grade: 'B-', credits: 5 },
+      { studentId: 'S1012', semester: 'Spring 2023', code: 'LAW205', title: 'Contract Law', score: 89, grade: 'B+', credits: 6 },
+      { studentId: 'S1012', semester: 'Spring 2023', code: 'LAW210', title: 'Criminal Law', score: 86, grade: 'B', credits: 6 },
+      { studentId: 'S1012', semester: 'Spring 2023', code: 'PHI110', title: 'Critical Thinking', score: 90, grade: 'A-', credits: 5 },
+
+      { studentId: 'S1013', semester: 'Spring 2023', code: 'HIS101', title: 'World History', score: 94, grade: 'A', credits: 5 },
+      { studentId: 'S1013', semester: 'Spring 2023', code: 'ENG110', title: 'Academic Writing', score: 88, grade: 'B+', credits: 5 },
+      { studentId: 'S1013', semester: 'Spring 2023', code: 'PHI110', title: 'Critical Thinking', score: 83, grade: 'B', credits: 5 },
+      { studentId: 'S1013', semester: 'Fall 2023', code: 'HIS220', title: 'Modern European History', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1013', semester: 'Fall 2023', code: 'POL101', title: 'Introduction to Politics', score: 85, grade: 'B', credits: 5 },
+      { studentId: 'S1013', semester: 'Fall 2023', code: 'COM120', title: 'Public Speaking', score: 87, grade: 'B+', credits: 5 },
+
+      { studentId: 'S1014', semester: 'Fall 2022', code: 'CHE101', title: 'General Chemistry', score: 91, grade: 'A-', credits: 6 },
+      { studentId: 'S1014', semester: 'Fall 2022', code: 'BIO101', title: 'Cell Biology', score: 82, grade: 'B-', credits: 6 },
+      { studentId: 'S1014', semester: 'Fall 2022', code: 'MAT101', title: 'Calculus I', score: 78, grade: 'C+', credits: 6 },
+      { studentId: 'S1014', semester: 'Spring 2023', code: 'CHE210', title: 'Organic Chemistry', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1014', semester: 'Spring 2023', code: 'CHE220', title: 'Analytical Chemistry', score: 86, grade: 'B', credits: 6 },
+      { studentId: 'S1014', semester: 'Spring 2023', code: 'STA201', title: 'Statistics for Science', score: 80, grade: 'B-', credits: 5 },
+
+      { studentId: 'S1015', semester: 'Fall 2021', code: 'HLT101', title: 'Introduction to Public Health', score: 93, grade: 'A', credits: 6 },
+      { studentId: 'S1015', semester: 'Fall 2021', code: 'BIO101', title: 'Cell Biology', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1015', semester: 'Fall 2021', code: 'PSY101', title: 'Introduction to Psychology', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1015', semester: 'Spring 2022', code: 'HLT220', title: 'Epidemiology', score: 91, grade: 'A-', credits: 6 },
+      { studentId: 'S1015', semester: 'Spring 2022', code: 'STA201', title: 'Statistics for Science', score: 85, grade: 'B', credits: 5 },
+      { studentId: 'S1015', semester: 'Spring 2022', code: 'HLT230', title: 'Global Health', score: 87, grade: 'B+', credits: 5 },
+
+      { studentId: 'S1016', semester: 'Fall 2023', code: 'CIV101', title: 'Introduction to Civil Engineering', score: 82, grade: 'B-', credits: 6 },
+      { studentId: 'S1016', semester: 'Fall 2023', code: 'MAT101', title: 'Calculus I', score: 78, grade: 'C+', credits: 6 },
+      { studentId: 'S1016', semester: 'Fall 2023', code: 'PHY101', title: 'General Physics', score: 80, grade: 'B-', credits: 6 },
+      { studentId: 'S1016', semester: 'Spring 2024', code: 'CIV210', title: 'Engineering Mechanics', score: 86, grade: 'B', credits: 6 },
+      { studentId: 'S1016', semester: 'Spring 2024', code: 'MAT202', title: 'Linear Algebra', score: 81, grade: 'B-', credits: 6 },
+      { studentId: 'S1016', semester: 'Spring 2024', code: 'CAD110', title: 'Computer-Aided Design', score: 89, grade: 'B+', credits: 5 },
+
+      { studentId: 'S1017', semester: 'Fall 2022', code: 'MKT220', title: 'Marketing Principles', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1017', semester: 'Fall 2022', code: 'BUS101', title: 'Principles of Management', score: 86, grade: 'B', credits: 6 },
+      { studentId: 'S1017', semester: 'Fall 2022', code: 'ENG110', title: 'Academic Writing', score: 88, grade: 'B+', credits: 5 },
+      { studentId: 'S1017', semester: 'Spring 2023', code: 'MKT310', title: 'Consumer Behavior', score: 92, grade: 'A-', credits: 5 },
+      { studentId: 'S1017', semester: 'Spring 2023', code: 'BUS102', title: 'Business Communication', score: 89, grade: 'B+', credits: 5 },
+      { studentId: 'S1017', semester: 'Spring 2023', code: 'ECO101', title: 'Microeconomics', score: 80, grade: 'B-', credits: 5 },
+
+      { studentId: 'S1018', semester: 'Fall 2021', code: 'POL101', title: 'Introduction to Politics', score: 79, grade: 'C+', credits: 5 },
+      { studentId: 'S1018', semester: 'Fall 2021', code: 'HIS101', title: 'World History', score: 75, grade: 'C', credits: 5 },
+      { studentId: 'S1018', semester: 'Fall 2021', code: 'ENG110', title: 'Academic Writing', score: 72, grade: 'C-', credits: 5 },
+      { studentId: 'S1018', semester: 'Spring 2022', code: 'POL210', title: 'International Relations', score: 81, grade: 'B-', credits: 5 },
+      { studentId: 'S1018', semester: 'Spring 2022', code: 'LAW101', title: 'Legal Systems', score: 77, grade: 'C+', credits: 6 },
+      { studentId: 'S1018', semester: 'Spring 2022', code: 'SOC101', title: 'Introduction to Sociology', score: 74, grade: 'C', credits: 5 },
+
+      { studentId: 'S1019', semester: 'Fall 2023', code: 'ENV101', title: 'Environmental Studies', score: 92, grade: 'A-', credits: 5 },
+      { studentId: 'S1019', semester: 'Fall 2023', code: 'BIO101', title: 'Cell Biology', score: 87, grade: 'B+', credits: 6 },
+      { studentId: 'S1019', semester: 'Fall 2023', code: 'CHE101', title: 'General Chemistry', score: 82, grade: 'B-', credits: 6 },
+      { studentId: 'S1019', semester: 'Spring 2024', code: 'ENV210', title: 'Climate Science', score: 90, grade: 'A-', credits: 5 },
+      { studentId: 'S1019', semester: 'Spring 2024', code: 'STA201', title: 'Statistics for Science', score: 84, grade: 'B', credits: 5 },
+      { studentId: 'S1019', semester: 'Spring 2024', code: 'ENV230', title: 'Sustainability Policy', score: 88, grade: 'B+', credits: 5 },
+
+      { studentId: 'S1020', semester: 'Spring 2022', code: 'MEC101', title: 'Introduction to Mechanical Engineering', score: 85, grade: 'B', credits: 6 },
+      { studentId: 'S1020', semester: 'Spring 2022', code: 'MAT101', title: 'Calculus I', score: 83, grade: 'B', credits: 6 },
+      { studentId: 'S1020', semester: 'Spring 2022', code: 'PHY101', title: 'General Physics', score: 79, grade: 'C+', credits: 6 },
+      { studentId: 'S1020', semester: 'Fall 2022', code: 'MEC220', title: 'Thermodynamics', score: 88, grade: 'B+', credits: 6 },
+      { studentId: 'S1020', semester: 'Fall 2022', code: 'MAT202', title: 'Linear Algebra', score: 82, grade: 'B-', credits: 6 },
+      { studentId: 'S1020', semester: 'Fall 2022', code: 'CAD110', title: 'Computer-Aided Design', score: 91, grade: 'A-', credits: 5 }
+    ];
+
+    const gradePoints = {
+      'A': 4.0,
+      'A-': 3.7,
+      'B+': 3.3,
+      'B': 3.0,
+      'B-': 2.7,
+      'C+': 2.3,
+      'C': 2.0,
+      'C-': 1.7,
+      'D': 1.0,
+      'F': 0.0
+    };
+
+    const semesterOrder = (semester) => {
+      const [term, year] = semester.split(' ');
+      const termRank = { Spring: 1, Summer: 2, Fall: 3, Winter: 4 }[term] || 9;
+      return Number(year) * 10 + termRank;
+    };
+
+    function calculateGPA(records) {
+      const totals = records.reduce((acc, record) => {
+        const gp = gradePoints[record.grade] ?? 0;
+        acc.credits += record.credits;
+        acc.quality += gp * record.credits;
+        return acc;
+      }, { credits: 0, quality: 0 });
+
+      return totals.credits ? totals.quality / totals.credits : 0;
+    }
+
+    function groupBySemester(records) {
+      const grouped = {};
+      records.forEach(record => {
+        if (!grouped[record.semester]) grouped[record.semester] = [];
+        grouped[record.semester].push(record);
+      });
+      return Object.entries(grouped)
+        .sort((a, b) => semesterOrder(a[0]) - semesterOrder(b[0]));
+    }
+
+    function populateDropdown() {
+      const select = document.getElementById('studentSelect');
+      students.forEach(student => {
+        const option = document.createElement('option');
+        option.value = student.id;
+        option.textContent = `${student.name} (${student.id})`;
+        select.appendChild(option);
+      });
+    }
+
+    function renderStudentList(filteredStudents = students) {
+      const list = document.getElementById('studentList');
+      const selectedId = document.getElementById('studentSelect').value;
+
+      if (!filteredStudents.length) {
+        list.innerHTML = '<div class="empty"><p>No students match your search.</p></div>';
+        return;
+      }
+
+      list.innerHTML = filteredStudents.map(student => `
+        <div class="student-card ${student.id === selectedId ? 'active' : ''}" data-id="${student.id}">
+          <div class="name">${student.name}</div>
+          <div class="meta">${student.id} • ${student.program}</div>
+          <div class="meta">${student.email}</div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.student-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.getElementById('studentSelect').value = card.dataset.id;
+          generateTranscript(card.dataset.id);
+        });
+      });
+    }
+
+    function generateTranscript(studentId) {
+      const output = document.getElementById('transcriptOutput');
+      const student = students.find(s => s.id === studentId);
+
+      renderStudentList(getFilteredStudents());
+
+      if (!student) {
+        output.innerHTML = `
+          <div class="empty">
+            <h2>No transcript selected</h2>
+            <p>Select a student from the list, use the dropdown, or search to generate the transcript automatically.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const records = academicRecords.filter(r => r.studentId === studentId);
+      const grouped = groupBySemester(records);
+      const totalCredits = records.reduce((sum, r) => sum + r.credits, 0);
+      const cumulativeGPA = calculateGPA(records).toFixed(2);
+      const today = new Date().toLocaleDateString();
+
+      const semesterBlocks = grouped.map(([semester, semesterRecords]) => {
+        const semesterGPA = calculateGPA(semesterRecords).toFixed(2);
+        const rows = semesterRecords.map(record => `
+          <tr>
+            <td>${record.code}</td>
+            <td>${record.title}</td>
+            <td class="num">${record.score}</td>
+            <td class="num">${record.grade}</td>
+            <td class="num">${record.credits}</td>
+          </tr>
+        `).join('');
+
+        return `
+          <section class="semester">
+            <div class="semester-header">
+              <strong>${semester}</strong>
+              <span>Semester GPA: ${semesterGPA}</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Course Title</th>
+                  <th class="num">Score</th>
+                  <th class="num">Grade</th>
+                  <th class="num">Credits</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </section>
+        `;
+      }).join('');
+
+      output.innerHTML = `
+        <div class="transcript-header">
+          <div class="title">
+            <h2>University of Example</h2>
+            <div>Official Academic Transcript</div>
+          </div>
+          <div>
+            <div class="badge">${student.status}</div>
+            <div style="margin-top:10px; color: var(--muted);">Issued: ${today}</div>
+          </div>
+        </div>
+
+        <h3>Student Information</h3>
+        <div class="info-grid">
+          <div class="info-item"><span>Student ID</span><strong>${student.id}</strong></div>
+          <div class="info-item"><span>Full Name</span><strong>${student.name}</strong></div>
+          <div class="info-item"><span>University Email</span><strong>${student.email}</strong></div>
+          <div class="info-item"><span>Faculty</span><strong>${student.faculty}</strong></div>
+          <div class="info-item"><span>Program</span><strong>${student.program}</strong></div>
+          <div class="info-item"><span>Enrollment Date</span><strong>${student.enrollmentDate}</strong></div>
+        </div>
+
+        <h3>Academic Record</h3>
+        ${semesterBlocks}
+
+        <section class="summary">
+          <div class="summary-card">
+            <span>Total Credits Earned</span>
+            <strong>${totalCredits}</strong>
+          </div>
+          <div class="summary-card">
+            <span>Cumulative GPA</span>
+            <strong>${cumulativeGPA}</strong>
+          </div>
+          <div class="summary-card">
+            <span>Total Courses Completed</span>
+            <strong>${records.length}</strong>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          <div>Registrar Signature: ____________________</div>
+          <div>Official Seal / Date: ____________________</div>
+        </div>
+      `;
+    }
+
+    function getFilteredStudents() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!query) return students;
+      return students.filter(student =>
+        student.name.toLowerCase().includes(query) ||
+        student.id.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query)
+      );
+    }
+
+    function handleSearch() {
+      const filtered = getFilteredStudents();
+      renderStudentList(filtered);
+
+      if (filtered.length === 1) {
+        document.getElementById('studentSelect').value = filtered[0].id;
+        generateTranscript(filtered[0].id);
+      }
+    }
+
+    document.getElementById('studentSelect').addEventListener('change', (e) => {
+      generateTranscript(e.target.value);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+    document.getElementById('printBtn').addEventListener('click', () => {
+      window.print();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('studentSelect').value = '';
+      renderStudentList(students);
+      generateTranscript('');
+    });
+
+    populateDropdown();
+    renderStudentList(students);
+  </script>
+</body>
+</html>
